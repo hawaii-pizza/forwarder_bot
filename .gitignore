@@ -1,0 +1,20 @@
+# Byte-compiled / dependency files
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+
+# Logs
+*.log
+logs/
+
+# Environments
+.env
+*.env
+
+# Telethon sessions
+sessions/
+tg_sessions/
+
+# Virtual envs
+venv/
