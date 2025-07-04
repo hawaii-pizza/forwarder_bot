@@ -15,7 +15,8 @@ class Settings:
 
     # Runtime sanity‑checks
     def validate(self):
-        missing = [k for k, v in self.__dict__.items() if v in (None, "")]
+        required = ["BOT_TOKEN", "API_ID", "API_HASH"]
+        missing = [k for k in required if not getattr(self, k)]
         if missing:
             raise RuntimeError(f"Missing required settings: {missing}")
 
