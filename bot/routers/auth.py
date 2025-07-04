@@ -9,7 +9,6 @@ import logging
 from pathlib import Path
 
 from aiogram import Router, F
-from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramNetworkError
 from aiogram.filters import CommandStart
 from aiogram.types import (
@@ -20,12 +19,12 @@ from aiogram.types import (
     Message,
 )
 
-router = Router()
-log = logging.getLogger(__name__)
-
 from bot.routers.sources import AWAITING_SRC
 from bot.routers.targets import AWAITING_TGT
 from bot.routers.filters import AWAITING_FILTER
+
+router = Router()
+log = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------- #
 # Shared singletons (avoids circular-import re-execution)                     #
