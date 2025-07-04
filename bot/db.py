@@ -1,6 +1,6 @@
 import aiosqlite
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from .config import settings
 
 @dataclass

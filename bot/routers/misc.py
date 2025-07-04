@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from aiogram import Router, F
 from aiogram.enums import ParseMode
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery
 
 router = Router()
 

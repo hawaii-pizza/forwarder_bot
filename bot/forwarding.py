@@ -3,7 +3,7 @@ alive as long as the user is authenticated and has at least one source + target.
 from __future__ import annotations
 import asyncio
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 from telethon import events, TelegramClient
 from telethon.tl.custom import Message
@@ -28,8 +28,8 @@ class ForwardManager:
         if tg_id in self._clients:
             await self.stop_user(tg_id)
 
-        sources = await self.db.list_sources(tg_id)
-        target  = await self.db.get_target(tg_id)
+        sources: list[Source] = await self.db.list_sources(tg_id)
+        target: Target | None = await self.db.get_target(tg_id)
         if not sources or not target:
             return  # nothing to do yet
 

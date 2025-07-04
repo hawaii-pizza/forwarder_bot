@@ -12,7 +12,6 @@ Relies on singletons in `bot.entry` (db, auth, forwarder) and
 """
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from aiogram import Router, F
