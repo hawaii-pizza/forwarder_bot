@@ -3,9 +3,9 @@ alive as long as the user is authenticated and has at least one source + target.
 from __future__ import annotations
 import asyncio
 import logging
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
-from telethon import events
+from telethon import events, TelegramClient
 from telethon.tl.custom import Message
 
 from .db import Database, Source, Target
@@ -19,7 +19,8 @@ class ForwardManager:
     def __init__(self, db: Database, auth: AuthManager):
         self.db = db
         self.auth = auth
-        self._clients: Dict[int, asyncio.Task] = {}
+        # Keep track of the live TelegramClient and its run task per user
+        self._clients: Dict[int, Tuple[TelegramClient, asyncio.Task]] = {}
 
     # ----------------------------- public API ---------------------------------
     async def refresh_user(self, tg_id: int):
@@ -62,15 +63,21 @@ class ForwardManager:
             chat = (src.chat_id, src.topic_id) if src.topic_id else src.chat_id
             client.add_event_handler(_handler, events.NewMessage(chats=chat))
 
-        self._clients[tg_id] = asyncio.create_task(client.run_until_disconnected())
+        task = asyncio.create_task(client.run_until_disconnected())
+        self._clients[tg_id] = (client, task)
         log.info("Forward loop started for %s", tg_id)
 
     async def stop_user(self, tg_id: int):
-        task = self._clients.pop(tg_id, None)
+        entry = self._clients.pop(tg_id, None)
+        if not entry:
+            return
+        client, task = entry
+        if client.is_connected():
+            await client.disconnect()
         if task and not task.done():
             task.cancel()
-            log.info("Forward loop stopped for %s", tg_id)
+        log.info("Forward loop stopped for %s", tg_id)
 
     async def stop_all(self):
-        for uid in list(self._clients):
+        for uid in list(self._clients.keys()):
             await self.stop_user(uid)
