@@ -17,8 +17,6 @@ from bot import runtime as r
 
 from bot.config import settings
 from bot.logger import logger
-from bot.db import Database
-from bot.auth import AuthManager
 from bot.forwarding import ForwardManager
 
 from bot.routers.auth import router as auth_router
@@ -31,8 +29,6 @@ from bot.routers.misc    import router as misc_router
 # Instantiate core services (singletons shared across the package)
 # ----------------------------------------------------------------------------
 
-db = Database()
-auth = AuthManager()
 
 bot = Bot(
     settings.BOT_TOKEN,
