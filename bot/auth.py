@@ -41,6 +41,14 @@ class AuthManager:
             self._session_path(uid), settings.API_ID, settings.API_HASH
         )
 
+    def client(self, uid: int) -> TelegramClient:
+        """Return cached or new TelegramClient for this user."""
+        return (
+            self._active.get(uid)
+            or self._pending.get(uid)
+            or self._new_client(uid)
+        )
+
     # ------------------------------------------------------------------ #
     # public API                                                         #
     # ------------------------------------------------------------------ #
