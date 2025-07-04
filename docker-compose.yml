@@ -3,6 +3,9 @@ services:
     build: .
     env_file:
       - .env
+    environment:
+      # Store database inside the mounted data volume
+      DB_PATH: /app/data/bot.db
     volumes:
       - ./data:/app/data
       - ./sessions:/app/sessions
