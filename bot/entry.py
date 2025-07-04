@@ -33,7 +33,6 @@ from bot.routers.misc    import router as misc_router
 
 db = Database()
 auth = AuthManager()
-forwarder: ForwardManager | None = None
 
 bot = Bot(
     settings.BOT_TOKEN,
@@ -57,8 +56,8 @@ async def _on_startup():
 
 
 async def _on_shutdown() -> None:
-    if forwarder:
-        await forwarder.stop_all()
+    if r.forwarder:
+        await r.forwarder.stop_all()
     logger.info("Bot stopped")
 
 
