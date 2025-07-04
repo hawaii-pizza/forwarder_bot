@@ -23,7 +23,7 @@ def services():
 
 
 async def ensure_user(entry):
-    db, _ = services()
+    db, *_ = services()
     uid = entry.from_user.id
     await db.add_user_if_missing(uid)
     return uid
@@ -34,7 +34,7 @@ async def ensure_user(entry):
 
 @router.callback_query(F.data == "view_cfg")
 async def view_config(call: CallbackQuery):
-    db, main_menu = services()
+    db, _, _, main_menu = services()
     uid = await ensure_user(call)
 
     srcs = await db.list_sources(uid)
@@ -70,7 +70,7 @@ async def view_config(call: CallbackQuery):
 
 @router.callback_query(F.data == "donate")
 async def donate(call: CallbackQuery):
-    _, main_menu = services()
+    _, _, _, main_menu = services()
     txt = (
         "<b>You can send your donations to:</b>\n"
         "• SOL: <code>So11111111111111111111111111111111111111112</code>\n"
@@ -84,5 +84,5 @@ async def donate(call: CallbackQuery):
 
 @router.callback_query(F.data == "back_main")
 async def back_main(call: CallbackQuery):
-    _, main_menu = services()
+    _, _, _, main_menu = services()
     await call.message.answer("Main menu:", reply_markup=main_menu().as_markup())
