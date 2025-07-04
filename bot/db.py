@@ -39,6 +39,7 @@ class Database:
                 chat_id   INTEGER NOT NULL,
                 topic_id  INTEGER,
                 title     TEXT,
+                UNIQUE(tg_id, chat_id, topic_id),
                 FOREIGN KEY (tg_id) REFERENCES users(tg_id) ON DELETE CASCADE
             );
 
@@ -53,6 +54,7 @@ class Database:
                 tg_id       INTEGER NOT NULL,
                 user_id     INTEGER NOT NULL,
                 display_name TEXT,
+                UNIQUE(tg_id, user_id),
                 FOREIGN KEY (tg_id) REFERENCES users(tg_id) ON DELETE CASCADE
             );
             """
@@ -77,7 +79,9 @@ class Database:
     async def add_source(self, tg_id: int, chat_id: int, topic_id: Optional[int], title: str):
         await self.conn.execute(
             """INSERT INTO sources(tg_id, chat_id, topic_id, title)
-                   VALUES(?, ?, ?, ?)""",
+                   VALUES(?, ?, ?, ?)
+                   ON CONFLICT(tg_id, chat_id, topic_id)
+                   DO UPDATE SET title=excluded.title""",
             (tg_id, chat_id, topic_id, title),
         )
         await self.conn.commit()
@@ -114,7 +118,10 @@ class Database:
     # Filtered users helpers ---------------------------------------------------------
     async def add_filtered_user(self, tg_id: int, user_id: int, display_name: str):
         await self.conn.execute(
-            "INSERT INTO filtered_users(tg_id, user_id, display_name) VALUES(?, ?, ?)",
+            """INSERT INTO filtered_users(tg_id, user_id, display_name)
+                   VALUES(?, ?, ?)
+                   ON CONFLICT(tg_id, user_id)
+                   DO UPDATE SET display_name=excluded.display_name""",
             (tg_id, user_id, display_name),
         )
         await self.conn.commit()
