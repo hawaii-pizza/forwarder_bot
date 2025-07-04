@@ -102,11 +102,18 @@ async def add_src_finish(message: Message):
     # Validate access via Telethon
     client = auth.client(uid)
     try:
-        await client.start()
+        await client.connect()
+        if not await client.is_user_authorized():
+            await message.answer("❌ Please log in first.")
+            AWAITING_SRC.pop(uid, None)
+            return
         entity = await client.get_entity(chat_id)
-        title = getattr(entity, "title", str(entity)) + (f" (topic {topic_id})" if topic_id else "")
+        title = getattr(entity, "title", str(entity)) + (
+            f" (topic {topic_id})" if topic_id else ""
+        )
     except Exception as e:
         await message.answer(f"❌ Cannot access chat: {e}")
+        AWAITING_SRC.pop(uid, None)
         return
 
     await db.add_source(uid, chat_id, topic_id, title)

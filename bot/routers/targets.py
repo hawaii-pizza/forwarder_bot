@@ -72,10 +72,15 @@ async def set_target_finish(message: Message):
 
     client = auth.client(uid)
     try:
-        await client.start()
+        await client.connect()
+        if not await client.is_user_authorized():
+            await message.answer("❌ Please log in first.")
+            AWAITING_TGT.pop(uid, None)
+            return
         await client.get_entity(chat_id)  # access check
     except Exception as e:
         await message.answer(f"❌ Cannot access chat: {e}")
+        AWAITING_TGT.pop(uid, None)
         return
 
     await db.set_target(uid, chat_id, topic_id)
