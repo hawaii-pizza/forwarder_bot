@@ -7,7 +7,6 @@ Keep this file tiny: all heavy logic lives in the routers or helpers.
 from __future__ import annotations
 
 import asyncio
-import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -16,7 +15,7 @@ from aiogram.enums import ParseMode
 from bot import runtime as r
 
 from bot.config import settings
-from bot.logger import logger
+from bot.logger import logger, configure_logging
 from bot.forwarding import ForwardManager
 
 from bot.routers.auth import router as auth_router
@@ -58,8 +57,8 @@ async def _on_shutdown() -> None:
 
 
 async def main() -> None:
-    # Stream logs to stdout (visible in Docker)
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+    # Configure file + console logging
+    configure_logging()
 
     await _on_startup()
     try:
