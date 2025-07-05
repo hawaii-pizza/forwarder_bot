@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 
 from aiogram import Router, F
+from bot.utils.state import user_state, WAITING_TGT
 from aiogram.types import (
     CallbackQuery,
     Message,
@@ -43,9 +44,6 @@ async def ensure_user(entry: Message | CallbackQuery):
     await db.add_user_if_missing(uid)
     return uid
 
-# In‑memory awaiting map specific to this router
-AWAITING_TGT: dict[int, bool] = {}
-
 # -----------------------------------------------------------------------------
 # Set / change target flow
 # -----------------------------------------------------------------------------
@@ -53,14 +51,14 @@ AWAITING_TGT: dict[int, bool] = {}
 @router.callback_query(F.data == "set_tgt")
 async def set_target_start(call: CallbackQuery):
     uid = await ensure_user(call)
-    AWAITING_TGT[uid] = True
+    user_state[uid] = WAITING_TGT
     await call.message.answer(
         "Send the <code>chat_id</code> or <code>chat_id:topic_id</code> of the <b>target</b> chat where messages should be forwarded.",
         parse_mode=ParseMode.HTML,
     )
 
 
-@router.message(F.text, lambda m: AWAITING_TGT.get(m.from_user.id))
+@router.message(F.text, lambda m: user_state.get(m.from_user.id) == WAITING_TGT)
 async def set_target_finish(message: Message):
     db, auth, forwarder, main_menu = services()
     uid = message.from_user.id
@@ -75,12 +73,12 @@ async def set_target_finish(message: Message):
         await client.connect()
         if not await client.is_user_authorized():
             await message.answer("❌ Please log in first.")
-            AWAITING_TGT.pop(uid, None)
+            user_state.pop(uid, None)
             return
         await client.get_entity(chat_id)  # access check
     except Exception as e:
         await message.answer(f"❌ Cannot access chat: {e}")
-        AWAITING_TGT.pop(uid, None)
+        user_state.pop(uid, None)
         return
 
     await db.set_target(uid, chat_id, topic_id)
@@ -89,4 +87,4 @@ async def set_target_finish(message: Message):
         await forwarder.refresh_user(uid)
 
     await message.answer("✅ Target updated!", reply_markup=main_menu().as_markup())
-    AWAITING_TGT.pop(uid, None)
+    user_state.pop(uid, None)

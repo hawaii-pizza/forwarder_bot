@@ -16,4 +16,13 @@ from typing import Dict
 # Global mutable map (uid → state‑str)
 user_state: Dict[int, str] = {}
 
-__all__ = ["user_state"]
+WAITING_SRC    = "waiting_for_source"
+WAITING_TGT    = "waiting_for_target"
+WAITING_FILTER = "waiting_for_filter"
+
+__all__ = [
+    "user_state",
+    "WAITING_SRC",
+    "WAITING_TGT",
+    "WAITING_FILTER",
+]

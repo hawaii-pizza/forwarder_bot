@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 
 from aiogram import Router, F
+from bot.utils.state import user_state, WAITING_SRC
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
@@ -50,12 +51,6 @@ async def ensure_user(entry: Message | CallbackQuery):
     return uid
 
 # -----------------------------------------------------------------------------
-# In‑memory FSM for this router only
-# -----------------------------------------------------------------------------
-
-AWAITING_SRC: dict[int, bool] = {}
-
-# -----------------------------------------------------------------------------
 # Keyboards
 # -----------------------------------------------------------------------------
 
@@ -80,14 +75,14 @@ async def sources_kb(uid: int):
 @router.callback_query(F.data == "add_src")
 async def add_src_start(call: CallbackQuery):
     uid = await ensure_user(call)
-    AWAITING_SRC[uid] = True
+    user_state[uid] = WAITING_SRC
     await call.message.answer(
         "Send the <code>chat_id</code> or <code>chat_id:topic_id</code> of the <b>source</b> chat you want me to monitor.",
         parse_mode=ParseMode.HTML,
     )
 
 
-@router.message(F.text, lambda m: AWAITING_SRC.get(m.from_user.id))
+@router.message(F.text, lambda m: user_state.get(m.from_user.id) == WAITING_SRC)
 async def add_src_finish(message: Message):
     db, auth, forwarder, main_menu = services()
     uid = message.from_user.id
@@ -105,7 +100,7 @@ async def add_src_finish(message: Message):
         await client.connect()
         if not await client.is_user_authorized():
             await message.answer("❌ Please log in first.")
-            AWAITING_SRC.pop(uid, None)
+            user_state.pop(uid, None)
             return
         entity = await client.get_entity(chat_id)
         title = getattr(entity, "title", str(entity)) + (
@@ -113,7 +108,7 @@ async def add_src_finish(message: Message):
         )
     except Exception as e:
         await message.answer(f"❌ Cannot access chat: {e}")
-        AWAITING_SRC.pop(uid, None)
+        user_state.pop(uid, None)
         return
 
     await db.add_source(uid, chat_id, topic_id, title)
@@ -122,7 +117,7 @@ async def add_src_finish(message: Message):
         await forwarder.refresh_user(uid)
 
     await message.answer("✅ Source added!", reply_markup=main_menu().as_markup())
-    AWAITING_SRC.pop(uid, None)
+    user_state.pop(uid, None)
 
 # -----------------------------------------------------------------------------
 # Manage / delete sources

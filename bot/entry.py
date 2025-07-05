@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
@@ -25,6 +25,8 @@ from bot.routers.targets import router as targets_router
 from bot.routers.filters import router as filters_router
 from bot.routers.misc    import router as misc_router
 
+from bot.middlewares.error_logger import ErrorLogger
+
 # ----------------------------------------------------------------------------
 # Instantiate core services (singletons shared across the package)
 # ----------------------------------------------------------------------------
@@ -35,6 +37,13 @@ bot = Bot(
     default=DefaultBotProperties(parse_mode=ParseMode.HTML),
 )
 dp = Dispatcher()
+
+# --------------------------------------------------------------
+# Global error-logging middleware and “unhandled update” hook
+# --------------------------------------------------------------
+
+dp.message.middleware(ErrorLogger())          # log any exception in message handlers
+dp.callback_query.middleware(ErrorLogger())   # ...and in callback handlers
 
 dp.include_router(auth_router)
 dp.include_router(sources_router)

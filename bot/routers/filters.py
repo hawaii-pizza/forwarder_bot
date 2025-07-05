@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 
 from aiogram import Router, F
+from bot.utils.state import user_state, WAITING_FILTER
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
@@ -41,12 +42,6 @@ async def ensure_user(entry: Message | CallbackQuery):
     return uid
 
 # -----------------------------------------------------------------------------
-# In-memory awaiting map for add-filter flow
-# -----------------------------------------------------------------------------
-
-AWAITING_FILTER: dict[int, bool] = {}
-
-# -----------------------------------------------------------------------------
 # Keyboards
 # -----------------------------------------------------------------------------
 
@@ -67,18 +62,18 @@ async def filters_kb(uid: int):
 @router.callback_query(F.data == "add_filter")
 async def add_filter_start(call: CallbackQuery):
     uid = await ensure_user(call)
-    AWAITING_FILTER[uid] = True
+    user_state[uid] = WAITING_FILTER
     await call.message.answer("Send the <code>user_id</code> you want to <b>allow</b>. Leave blank to cancel.", parse_mode=ParseMode.HTML)
 
 
-@router.message(F.text, lambda m: AWAITING_FILTER.get(m.from_user.id))
+@router.message(F.text, lambda m: user_state.get(m.from_user.id) == WAITING_FILTER)
 async def add_filter_finish(message: Message):
     db, auth, forwarder, main_menu = services()
     uid = message.from_user.id
     raw = message.text.strip()
     if not raw:
         await message.answer("⏹️ Cancelled.", reply_markup=main_menu().as_markup())
-        AWAITING_FILTER.pop(uid, None)
+        user_state.pop(uid, None)
         return
 
     try:
@@ -101,7 +96,7 @@ async def add_filter_finish(message: Message):
         await forwarder.refresh_user(uid)
 
     await message.answer("✅ Filtered user added!", reply_markup=main_menu().as_markup())
-    AWAITING_FILTER.pop(uid, None)
+    user_state.pop(uid, None)
 
 # -----------------------------------------------------------------------------
 # Manage filtered users

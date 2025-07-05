@@ -18,10 +18,13 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
+from bot.utils.state import user_state
+from bot.utils.state import (
+    WAITING_SRC,
+    WAITING_TGT,
+    WAITING_FILTER,
+)
 
-from bot.routers.sources import AWAITING_SRC
-from bot.routers.targets import AWAITING_TGT
-from bot.routers.filters import AWAITING_FILTER
 
 router = Router()
 log = logging.getLogger(__name__)
@@ -149,12 +152,7 @@ async def logout(call: CallbackQuery):
 @router.message(F.chat.type == "private", flags={"block": False})
 async def auto_menu(msg: Message):
     uid = msg.from_user.id
-    if any((
-        AWAITING_SRC.get(uid),
-        AWAITING_TGT.get(uid),
-        AWAITING_FILTER.get(uid),
-        AWAIT_PWD.get(uid),
-    )):
+    if user_state.get(uid) in {WAITING_SRC, WAITING_TGT, WAITING_FILTER} or AWAIT_PWD.get(uid):
         return
     db, auth, _, menu = services()
     await db.add_user_if_missing(uid)
