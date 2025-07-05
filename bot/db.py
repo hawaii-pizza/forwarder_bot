@@ -88,7 +88,7 @@ class Database:
 
     async def remove_source(self, tg_id: int, chat_id: int, topic_id: Optional[int]):
         await self.conn.execute(
-            "DELETE FROM sources WHERE tg_id=? AND chat_id=? AND (topic_id IS ? OR topic_id=?)",
+            "DELETE FROM sources WHERE tg_id=? AND chat_id=? AND (topic_id=? OR (topic_id IS NULL AND ? IS NULL))",
             (tg_id, chat_id, topic_id, topic_id),
         )
         await self.conn.commit()
